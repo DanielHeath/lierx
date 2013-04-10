@@ -1,0 +1,16 @@
+
+#content {
+	margin:0px auto;
+}
+#game {
+	width: 100%;
+	display: inline-block;
+	background-color: black;
+}
+.page-footer {
+	text-align: center;
+	padding-top: 40px;
+}
+.heading-image {
+	padding: 20px;
+}
