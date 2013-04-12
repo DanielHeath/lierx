@@ -7,30 +7,12 @@ language: coffeescript
 lierx.PI = 3.141592653589793
 lierx.keyPresses = keyPresses = {}
 
-gameState = {
-  worms: {
-    "@MichaelDeWildt": {
-      x: 89,
-      y: 74,
-      facingAngle: 149,
-    },
-    "@Tibbo": {
-      x: 1039,
-      y: 180,
-      facingAngle: 44,
-    }
-  }
-  map: {
-    baseImg: "/map1.png"
-    width: 1600
-    height: 1200
-  }
-}
-
 $ ->
   $(window).keydown (e) ->
+    console.log(e.keyCode)
     keyPresses[e.keyCode] = true
   $(window).keyup (e) ->
+    console.log(e.keyCode)
     delete keyPresses[e.keyCode]
 
   # Setup paper map
@@ -41,17 +23,34 @@ $ ->
   tx = $("#game").width(width).height(height)
   window.paper = paper = Raphael(tx[0], tx.width(), tx.height())
 
+  lierx.localState = {worms: {}}
   lierx.renderGameState = (state) ->
     maptoPaperX = (x) ->
       (x / state.map.width) * paper.width
     maptoPaperY = (y) ->
       (y / state.map.width) * paper.width
 
-    paper.image("/map1.png", 10, 10, paper.width - 20, paper.height - 20)
+    lierx.localState.map ||= paper.image(state.map.baseImg, 10, 10, paper.width - 20, paper.height - 20)
+
     for name, worm of state.worms
       worm.x = maptoPaperX(worm.x)
       worm.y = maptoPaperY(worm.y)
-      paper.image("/worm.png", worm.x, worm.y, maptoPaperX(32), maptoPaperY(64))
-      paper.text(worm.x, worm.y, name)
 
-  lierx.renderGameState(gameState)
+      if not lierx.localState.worms[name]
+        lierx.localState.worms[name] = {
+          img: paper.image("/worm.png", worm.x, worm.y, maptoPaperX(32), maptoPaperY(64))
+          text: paper.text(worm.x, worm.y, name)
+        }
+      else
+        lierx.localState.worms[name].img.animate({x: worm.x, y: worm.y}, state.msPerFrame)
+        lierx.localState.worms[name].text.animate({x: worm.x, y: worm.y}, state.msPerFrame)
+
+
+
+  window.c = c = new WebSocket("ws://localhost:8888/ws/")
+
+  c.onmessage = (me) ->
+    lierx.renderGameState(JSON.parse me.data)
+    k = (n) -> (if keyPresses[n] then '1' else '0')
+    c.send(k(87) + k(83) + k(65) + k(68))
+

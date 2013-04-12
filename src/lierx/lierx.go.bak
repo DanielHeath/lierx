@@ -1,0 +1,81 @@
+package main
+
+import (
+  socketio "code.google.com/p/go-socketio"
+  "fmt"
+  "lierx/player"
+  "log"
+  "time"
+  //  "lierx/state_sender"
+  "net/http"
+)
+
+const (
+  foo = `{
+  worms: {
+    "@MichaelDeWildt": {
+      x: %d,
+      y: %d,
+      facingAngle: %d,
+    },
+    "@Tibbo": {
+      x: %d,
+      y: %d,
+      facingAngle: %d,
+    }
+  }
+  map: {
+    baseImg: "/map1.png"
+    width: 1600
+    height: 1200
+  }
+}`
+)
+
+var mdw, tib player.Player
+
+func init() {
+  mdw = player.Player{89, 74, 149}
+  tib = player.Player{1039, 180, 44}
+}
+
+func nextFrame() {
+  a, b, c := mdw.Tick()
+  d, e, f := tib.Tick()
+  fmt.Sprintf(foo, a, b, c, d, e, f)
+}
+
+func onConnect(s string, n *socketio.NameSpace) string {
+  fmt.Println("connected")
+  n.EventEmitter.
+  return "woot"
+}
+
+func newSocketIo() *socketio.SocketIOServer {
+  sock_config := &socketio.Config{}
+  sio := socketio.NewSocketIOServer(sock_config)
+
+  // Handler for new connections, also adds socket.io event handlers
+  sio.On("connect", onConnect)
+  sio.On("disconnect", func(s string) { fmt.Println("Disconnect!") })
+
+  ticker := time.NewTicker(time.Second)
+  go func() {
+    for _ = range <-ticker {
+      sio.
+    }
+  }()
+
+  return sio
+}
+
+func main() {
+  mux := http.NewServeMux()
+
+  mux.Handle("/socket.io/", newSocketIo())
+
+  serveStatic := http.FileServer(http.Dir("jekyll/_site"))
+  mux.Handle("/", serveStatic)
+
+  log.Fatal(http.ListenAndServe(":8888", mux))
+}
